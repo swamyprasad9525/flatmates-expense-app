@@ -538,3 +538,17 @@ class ImportConfirmView(APIView):
             })
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+from django.http import JsonResponse
+
+def api_root_view(request):
+    return JsonResponse({
+        'message': 'Welcome to the Flat 404 Shared Expenses API Backend!',
+        'status': 'healthy',
+        'frontend_url': 'http://localhost:5173/',
+        'api_endpoints': {
+            'login': '/api/auth/login/',
+            'status': '/api/auth/status/',
+            'groups': '/api/groups/',
+        }
+    })

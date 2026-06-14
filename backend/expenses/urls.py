@@ -3,13 +3,14 @@ from rest_framework.routers import DefaultRouter
 from expenses.views import (
     LoginView, AuthStatusView, GroupViewSet, MembershipView,
     GroupExpensesView, GroupSettlementsView, GroupBalancesView,
-    ImportParseView, ImportConfirmView
+    ImportParseView, ImportConfirmView, api_root_view
 )
 
 router = DefaultRouter()
 router.register(r'groups', GroupViewSet, basename='group')
 
 urlpatterns = [
+    path('', api_root_view, name='api_root'),
     path('api/', include(router.urls)),
     path('api/auth/login/', LoginView.as_view(), name='login'),
     path('api/auth/status/', AuthStatusView.as_view(), name='auth_status'),
