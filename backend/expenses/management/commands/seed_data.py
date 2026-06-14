@@ -29,10 +29,9 @@ class Command(BaseCommand):
                 'email': f['email'],
                 'first_name': f['first_name']
             })
-            if created or not user.has_usable_password():
-                user.set_password('flatmate123')
-                user.save()
-                self.stdout.write(f"User {f['username']} created/updated password to 'flatmate123'")
+            user.set_password('flatmate123')
+            user.save()
+            self.stdout.write(f"User {f['username']} password set/reset to 'flatmate123'")
             users[f['username']] = user
 
         # 3. Create default group
