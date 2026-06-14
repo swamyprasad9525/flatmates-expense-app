@@ -1,0 +1,19 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*/__pycache__/
+backend/expenses/migrations/__pycache__/
+*.pyc
+db.sqlite3
+
+# Node / React
+frontend/my-app/node_modules/
+frontend/my-app/dist/
+frontend/my-app/.env.local
+frontend/my-app/.env.*.local
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
