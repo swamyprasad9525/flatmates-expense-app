@@ -95,3 +95,14 @@ This log documents the AI tools used, key prompts, and three concrete cases wher
 - **What was changed**: 
   Replaced `status.HTTP_44_NOT_FOUND` with `status.HTTP_404_NOT_FOUND` and ran the Django check/test suite to verify functionality.
 
+---
+
+### Case 7: Missing `rest_framework.authtoken` in `INSTALLED_APPS` (settings.py)
+- **What the AI did wrong**: 
+  Used Token authentication via DRF's `Token` model without adding `'rest_framework.authtoken'` to `INSTALLED_APPS` in `settings.py`.
+- **How it was caught**: 
+  Attempting to authenticate/login returned a `500 Internal Server Error` due to `AttributeError: type object 'Token' has no attribute 'objects'` (since Django doesn't load model managers for unlisted apps).
+- **What was changed**: 
+  Added `'rest_framework.authtoken'` to `INSTALLED_APPS` in `settings.py` and ran `python manage.py migrate` to create the auth token database tables.
+
+
