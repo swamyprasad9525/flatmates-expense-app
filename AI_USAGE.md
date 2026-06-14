@@ -85,3 +85,13 @@ This log documents the AI tools used, key prompts, and three concrete cases wher
 - **What was changed**: 
   Added `import re` along with the standard datetime/decimal imports at the top of `backend/expenses/views.py`.
 
+---
+
+### Case 6: Incorrect REST Framework HTTP Status Code Typo in Views (views.py)
+- **What the AI did wrong**: 
+  Returned `status.HTTP_44_NOT_FOUND` in `GroupSettlementsView.delete` for a non-existent settlement instead of `status.HTTP_404_NOT_FOUND`.
+- **How it was caught**: 
+  Code review and static scanning of HTTP status codes in `views.py` revealed that `HTTP_44_NOT_FOUND` is not a valid Django REST Framework status code constant, which would raise an `AttributeError` at runtime.
+- **What was changed**: 
+  Replaced `status.HTTP_44_NOT_FOUND` with `status.HTTP_404_NOT_FOUND` and ran the Django check/test suite to verify functionality.
+
