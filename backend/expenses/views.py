@@ -381,7 +381,7 @@ class GroupSettlementsView(APIView):
             settlement.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Settlement.DoesNotExist:
-            return Response({'error': 'Settlement not found'}, status=status.HTTP_44_NOT_FOUND)
+            return Response({'error': 'Settlement not found'}, status=status.HTTP_404_NOT_FOUND)
 
 # Balances & Minimization View
 class GroupBalancesView(APIView):
