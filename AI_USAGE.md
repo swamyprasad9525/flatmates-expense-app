@@ -105,4 +105,15 @@ This log documents the AI tools used, key prompts, and three concrete cases wher
 - **What was changed**: 
   Added `'rest_framework.authtoken'` to `INSTALLED_APPS` in `settings.py` and ran `python manage.py migrate` to create the auth token database tables.
 
+---
+
+### Case 8: Empty `ALLOWED_HOSTS` in Production (settings.py)
+- **What the AI did wrong**: 
+  Left `ALLOWED_HOSTS = []` in Django's production configurations, causing request validation to fail on Render's subdomain.
+- **How it was caught**: 
+  Triggering login requests on the Vercel deployed app threw a `400 Bad Request` returned from the backend, which printed a `DisallowedHost` security exception in the Django trace.
+- **What was changed**: 
+  Updated `ALLOWED_HOSTS = ['*']` in `settings.py` to permit request headers from any subdomain host.
+
+
 
