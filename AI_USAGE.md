@@ -61,3 +61,27 @@ This log documents the AI tools used, key prompts, and three concrete cases wher
   `django.core.exceptions.ImproperlyConfigured: Error loading psycopg2 module: No module named 'psycopg2'`.
 - **What was changed**: 
   Installed the Postgres driver programmatically by running `venv\Scripts\python -m pip install psycopg2-binary` before running migrations, resolving the dependency error.
+
+---
+
+### Case 4: Float and Decimal Subtraction TypeError in Duplicate Scanner (utils.py)
+- **What the AI did wrong**: 
+  Subtracted `amount_decimal` (Decimal type) from `prev_row['amount']` (float type) directly in `utils.py` during duplicate transaction checks, causing python to crash with a TypeError.
+- **How it was caught**: 
+  Running the manual validation script `test_import.py` threw a traceback:
+  `TypeError: unsupported operand type(s) for -: 'float' and 'decimal.Decimal'`.
+- **What was changed**: 
+  Cast the Decimal value `amount_decimal` to `float` before running the subtraction:
+  `abs(prev_row['amount'] - float(amount_decimal)) < 1.0`.
+
+---
+
+### Case 5: Missing Regex Library Import in Views (views.py)
+- **What the AI did wrong**: 
+  Utilized the Python regular expressions matching module `re.match` inside the `save_expense_splits` view helper function in `views.py` without importing `re` at the top of the file.
+- **How it was caught**: 
+  Simulating CSV confirm transaction imports triggered a traceback:
+  `NameError: name 're' is not defined`.
+- **What was changed**: 
+  Added `import re` along with the standard datetime/decimal imports at the top of `backend/expenses/views.py`.
+
