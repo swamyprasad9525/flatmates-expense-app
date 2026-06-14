@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
+import re
 
 from expenses.models import Group, GroupMembership, Expense, ExpenseSplit, Settlement, ImportReport, Profile
 from expenses.serializers import (

@@ -379,7 +379,7 @@ def parse_csv_export(file_content, group_id):
             desc2 = raw_description.lower()
             if (prev_row['date'] == str(resolved_date) and 
                 prev_row['paid_by'] == resolved_paid_by and 
-                abs(prev_row['amount'] - amount_decimal) < 1.0):
+                abs(prev_row['amount'] - float(amount_decimal)) < 1.0):
                 
                 # Check description similarity (simple check or prefix)
                 if desc1 in desc2 or desc2 in desc1 or 'marina bites' in desc1 and 'marina bites' in desc2:
