@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Wallet, LogIn, UserCheck, ShieldAlert } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import CSVImportWizard from './components/CSVImportWizard';
+import { API_BASE_URL } from './config';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -24,7 +25,7 @@ export default function App() {
 
   const validateToken = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/status/', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/status/`, {
         headers: { 'Authorization': `Token ${token}` }
       });
       if (response.ok) {
@@ -41,7 +42,7 @@ export default function App() {
 
   const fetchGroup = async (authToken) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/groups/', {
+      const response = await fetch(`${API_BASE_URL}/api/groups/`, {
         headers: { 'Authorization': `Token ${authToken}` }
       });
       if (response.ok) {
@@ -60,7 +61,7 @@ export default function App() {
 
   const createDefaultGroup = async (authToken) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/groups/', {
+      const response = await fetch(`${API_BASE_URL}/api/groups/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${authToken}`,
@@ -83,7 +84,7 @@ export default function App() {
     setError(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

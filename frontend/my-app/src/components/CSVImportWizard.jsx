@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, AlertTriangle, CheckCircle, Check, X, ShieldAlert, Sparkles, FileText, ArrowRight, RefreshCw } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function CSVImportWizard({ groupId, token, onImportSuccess, onCancel }) {
   const [step, setStep] = useState(1); // 1: Upload, 2: Resolve Anomalies, 3: Success Report
@@ -30,7 +31,7 @@ export default function CSVImportWizard({ groupId, token, onImportSuccess, onCan
     formData.append('file', file);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/import/parse/`, {
+      const response = await fetch(`${API_BASE_URL}/api/groups/${groupId}/import/parse/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`
@@ -143,7 +144,7 @@ export default function CSVImportWizard({ groupId, token, onImportSuccess, onCan
     // Filter out rows that are duplicates and are to be deleted
     // Or let Django API parse and commit whatever is sent in the array
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/import/confirm/`, {
+      const response = await fetch(`${API_BASE_URL}/api/groups/${groupId}/import/confirm/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`,

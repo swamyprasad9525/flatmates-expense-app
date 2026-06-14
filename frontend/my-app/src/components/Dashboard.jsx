@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Wallet, History, Users, Settings, LogOut, ArrowRight, Check, AlertCircle, Trash2, Calendar, FileSpreadsheet, X, HelpCircle } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function Dashboard({ groupId, token, user, onLogout, onTriggerImport }) {
   const [data, setData] = useState(null);
@@ -52,19 +53,19 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
       const headers = { 'Authorization': `Token ${token}` };
       
       // Get Balances, Ledgers, Minimized
-      const balRes = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/balances/`, { headers });
+      const balRes = await fetch(`${API_BASE_URL}/api/groups/${groupId}/balances/`, { headers });
       const balData = await balRes.json();
       
       // Get Expenses
-      const expRes = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/expenses/`, { headers });
+      const expRes = await fetch(`${API_BASE_URL}/api/groups/${groupId}/expenses/`, { headers });
       const expData = await expRes.json();
       
       // Get Settlements
-      const setlRes = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/settlements/`, { headers });
+      const setlRes = await fetch(`${API_BASE_URL}/api/groups/${groupId}/settlements/`, { headers });
       const setlData = await setlRes.json();
 
       // Get Members
-      const memRes = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/members/`, { headers });
+      const memRes = await fetch(`${API_BASE_URL}/api/groups/${groupId}/members/`, { headers });
       const memData = await memRes.json();
 
       setData(balData);
@@ -100,7 +101,7 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/expenses/`, {
+      const response = await fetch(`${API_BASE_URL}/api/groups/${groupId}/expenses/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`,
@@ -145,7 +146,7 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/settlements/`, {
+      const response = await fetch(`${API_BASE_URL}/api/groups/${groupId}/settlements/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`,
@@ -176,7 +177,7 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
   const handleDeleteExpense = async (id) => {
     if (!confirm("Are you sure you want to delete this expense?")) return;
     try {
-      await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/expenses/${id}/`, {
+      await fetch(`${API_BASE_URL}/api/groups/${groupId}/expenses/${id}/`, {
         method: 'DELETE',
         headers: { 'Authorization': `Token ${token}` }
       });
@@ -190,7 +191,7 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
   const handleDeleteSettlement = async (id) => {
     if (!confirm("Are you sure you want to delete this settlement?")) return;
     try {
-      await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/settlements/${id}/`, {
+      await fetch(`${API_BASE_URL}/api/groups/${groupId}/settlements/${id}/`, {
         method: 'DELETE',
         headers: { 'Authorization': `Token ${token}` }
       });
@@ -204,7 +205,7 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
   const handleSaveMember = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/groups/${groupId}/members/`, {
+      const response = await fetch(`${API_BASE_URL}/api/groups/${groupId}/members/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`,
