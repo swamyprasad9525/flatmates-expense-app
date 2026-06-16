@@ -47,6 +47,7 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
 
   // Fetch all group data
   const fetchData = async () => {
+    if (!groupId) return;
     setLoading(true);
     setError(null);
     try {
@@ -86,7 +87,9 @@ export default function Dashboard({ groupId, token, user, onLogout, onTriggerImp
   };
 
   useEffect(() => {
-    fetchData();
+    if (groupId) {
+      fetchData();
+    }
   }, [groupId]);
 
   // Handle manual expense addition
