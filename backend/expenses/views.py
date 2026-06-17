@@ -257,7 +257,8 @@ class MembershipView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        memberships = GroupMembership.objects.filter(group_id=group_id)
+        memberships = GroupMembership.objects.filter(group_id=group_id)\
+            .select_related('user', 'user__profile')
         serializer = GroupMembershipSerializer(memberships, many=True)
         return Response(serializer.data)
 

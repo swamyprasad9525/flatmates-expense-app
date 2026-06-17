@@ -437,8 +437,13 @@ def calculate_balances(group_id):
     ledgers = {u.username: [] for u in users}
 
     # Fetch all group expenses and splits
-    expenses = Expense.objects.filter(group=group).order_by('date', 'id')
-    settlements = Settlement.objects.filter(group=group).order_by('date', 'id')
+    expenses = Expense.objects.filter(group=group)\
+        .select_related('paid_by')\
+        .prefetch_related('splits', 'splits__user')\
+        .order_by('date', 'id')
+    settlements = Settlement.objects.filter(group=group)\
+        .select_related('payer', 'payee')\
+        .order_by('date', 'id')
 
     # 1. Process Expenses
     for exp in expenses:
