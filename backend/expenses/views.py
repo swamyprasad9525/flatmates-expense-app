@@ -18,6 +18,28 @@ from expenses.serializers import (
 )
 from expenses.utils import parse_csv_export, calculate_balances, minimize_debts, clean_name, parse_date
 
+# In-memory caches to minimize DB queries during bulk CSV imports
+_user_cache = {}
+_membership_cache = {}
+
+def get_user_cached(username):
+    cleaned = clean_name(username)
+    if cleaned not in _user_cache:
+        try:
+            _user_cache[cleaned] = User.objects.get(username=cleaned)
+        except User.DoesNotExist:
+            _user_cache[cleaned] = None
+    return _user_cache[cleaned]
+
+def get_membership_cached(group, user):
+    cache_key = (group.id, user.id)
+    if cache_key not in _membership_cache:
+        try:
+            _membership_cache[cache_key] = GroupMembership.objects.get(group=group, user=user)
+        except GroupMembership.DoesNotExist:
+            _membership_cache[cache_key] = None
+    return _membership_cache[cache_key]
+
 # Helper function to compute and save splits for an expense
 def save_expense_splits(expense, split_with_usernames, split_details_str=None):
     amount_inr = expense.amount_in_inr
@@ -28,15 +50,17 @@ def save_expense_splits(expense, split_with_usernames, split_details_str=None):
     users_in_split = []
     for uname in split_with_usernames:
         cleaned_uname = clean_name(uname)
-        try:
-            u = User.objects.get(username=cleaned_uname)
+        u = get_user_cached(cleaned_uname)
+        if u:
             users_in_split.append(u)
-        except User.DoesNotExist:
+        else:
             # If user does not exist, check if we can create a profile for them
             # E.g. Dev's friend Kabir during import
             u = User.objects.create(username=cleaned_uname, first_name=cleaned_uname)
             u.set_password('flatmate123')
             u.save()
+            _user_cache[cleaned_uname] = u  # Add to cache
+            
             GroupMembership.objects.get_or_create(
                 group=expense.group,
                 user=u,
@@ -428,6 +452,11 @@ class ImportConfirmView(APIView):
         if not rows:
             return Response({'error': 'No data to import'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Clear/initialize caches for this import request
+        global _user_cache, _membership_cache
+        _user_cache = {}
+        _membership_cache = {}
+
         try:
             group = Group.objects.get(id=group_id)
             import_logs = []
@@ -459,17 +488,20 @@ class ImportConfirmView(APIView):
                         raise ValueError(f"Payer is missing at row {r.get('csv_row_number')}. Please select a payer.")
                     
                     payer_uname_cleaned = clean_name(payer_uname)
-                    try:
-                        paid_by = User.objects.get(username=payer_uname_cleaned)
-                    except User.DoesNotExist:
+                    paid_by = get_user_cached(payer_uname_cleaned)
+                    if not paid_by:
                         paid_by = User.objects.create(username=payer_uname_cleaned, first_name=payer_uname_cleaned)
                         paid_by.set_password('flatmate123')
                         paid_by.save()
-                        GroupMembership.objects.get_or_create(
+                        _user_cache[payer_uname_cleaned] = paid_by
+                        
+                        m_new = GroupMembership.objects.create(
                             group=group,
                             user=paid_by,
-                            defaults={'joined_date': date_val}
+                            joined_date=date_val
                         )
+                        _membership_cache[(group.id, paid_by.id)] = m_new
+
                     amount = Decimal(str(r.get('amount')))
                     currency = r.get('currency', 'INR')
                     exchange_rate = Decimal(str(r.get('exchange_rate', 1.0)))
@@ -484,19 +516,23 @@ class ImportConfirmView(APIView):
                     # We filter out anyone who was inactive in GroupMembership on the date.
                     active_split_with = []
                     for name in split_with:
-                        try:
-                            user_obj = User.objects.get(username=name)
-                            m = GroupMembership.objects.get(group=group, user=user_obj)
-                            if date_val >= m.joined_date and (not m.left_date or date_val <= m.left_date):
-                                active_split_with.append(name)
+                        user_obj = get_user_cached(name)
+                        if user_obj:
+                            m = get_membership_cached(group, user_obj)
+                            if m:
+                                if date_val >= m.joined_date and (not m.left_date or date_val <= m.left_date):
+                                    active_split_with.append(name)
+                                else:
+                                    import_logs.append({
+                                        'csv_row': r.get('csv_row_number'),
+                                        'description': r.get('description'),
+                                        'action': f"Excluded inactive member {name} from split list due to membership bounds on {date_val}"
+                                    })
                             else:
-                                import_logs.append({
-                                    'csv_row': r.get('csv_row_number'),
-                                    'description': r.get('description'),
-                                    'action': f"Excluded inactive member {name} from split list due to membership bounds on {date_val}"
-                                })
-                        except (User.DoesNotExist, GroupMembership.DoesNotExist):
-                            # Kabir, for example, is imported or created
+                                # User exists, but no membership in group?
+                                # Kabir/other members will be handled by save_expense_splits or default to active
+                                active_split_with.append(name)
+                        else:
                             active_split_with.append(name)
 
                     if split_type == 'settlement':
@@ -506,7 +542,19 @@ class ImportConfirmView(APIView):
                             raise ValueError(f"Settlement at row {r.get('csv_row_number')} has no payee")
                         
                         payee_uname = active_split_with[0]
-                        payee = User.objects.get(username=payee_uname)
+                        payee = get_user_cached(payee_uname)
+                        if not payee:
+                            payee = User.objects.create(username=payee_uname, first_name=payee_uname)
+                            payee.set_password('flatmate123')
+                            payee.save()
+                            _user_cache[payee_uname] = payee
+                            
+                            m_new = GroupMembership.objects.create(
+                                group=group,
+                                user=payee,
+                                joined_date=date_val
+                            )
+                            _membership_cache[(group.id, payee.id)] = m_new
                         
                         settlement = Settlement.objects.create(
                             group=group,
