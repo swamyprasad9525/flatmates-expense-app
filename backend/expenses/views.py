@@ -297,7 +297,10 @@ class GroupExpensesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        expenses = Expense.objects.filter(group_id=group_id).order_by('-date', '-id')
+        expenses = Expense.objects.filter(group_id=group_id)\
+            .select_related('paid_by', 'paid_by__profile', 'created_by')\
+            .prefetch_related('splits', 'splits__user', 'splits__user__profile')\
+            .order_by('-date', '-id')
         serializer = ExpenseSerializer(expenses, many=True)
         return Response(serializer.data)
 
@@ -369,7 +372,9 @@ class GroupSettlementsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        settlements = Settlement.objects.filter(group_id=group_id).order_by('-date', '-id')
+        settlements = Settlement.objects.filter(group_id=group_id)\
+            .select_related('payer', 'payer__profile', 'payee', 'payee__profile')\
+            .order_by('-date', '-id')
         serializer = SettlementSerializer(settlements, many=True)
         return Response(serializer.data)
 
