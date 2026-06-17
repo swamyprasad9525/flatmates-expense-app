@@ -16,7 +16,7 @@ from expenses.serializers import (
     UserSerializer, GroupSerializer, GroupMembershipSerializer,
     ExpenseSerializer, SettlementSerializer, ImportReportSerializer
 )
-from expenses.utils import parse_csv_export, calculate_balances, minimize_debts, clean_name
+from expenses.utils import parse_csv_export, calculate_balances, minimize_debts, clean_name, parse_date
 
 # Helper function to compute and save splits for an expense
 def save_expense_splits(expense, split_with_usernames, split_details_str=None):
@@ -37,6 +37,11 @@ def save_expense_splits(expense, split_with_usernames, split_details_str=None):
             u = User.objects.create(username=cleaned_uname, first_name=cleaned_uname)
             u.set_password('flatmate123')
             u.save()
+            GroupMembership.objects.get_or_create(
+                group=expense.group,
+                user=u,
+                defaults={'joined_date': expense.date}
+            )
             users_in_split.append(u)
 
     if not users_in_split:
@@ -440,8 +445,31 @@ class ImportConfirmView(APIView):
                         continue
 
                     # Determine splits and dates
-                    date_val = datetime.strptime(r.get('date'), '%Y-%m-%d').date()
-                    paid_by = User.objects.get(username=r.get('paid_by'))
+                    date_str = r.get('date')
+                    if not date_str:
+                        raise ValueError(f"Row {r.get('csv_row_number')} is missing a date.")
+                    
+                    date_obj, date_warning = parse_date(date_str)
+                    if not date_obj:
+                        raise ValueError(f"Invalid date format '{date_str}' at row {r.get('csv_row_number')}.")
+                    date_val = date_obj
+
+                    payer_uname = r.get('paid_by')
+                    if not payer_uname:
+                        raise ValueError(f"Payer is missing at row {r.get('csv_row_number')}. Please select a payer.")
+                    
+                    payer_uname_cleaned = clean_name(payer_uname)
+                    try:
+                        paid_by = User.objects.get(username=payer_uname_cleaned)
+                    except User.DoesNotExist:
+                        paid_by = User.objects.create(username=payer_uname_cleaned, first_name=payer_uname_cleaned)
+                        paid_by.set_password('flatmate123')
+                        paid_by.save()
+                        GroupMembership.objects.get_or_create(
+                            group=group,
+                            user=paid_by,
+                            defaults={'joined_date': date_val}
+                        )
                     amount = Decimal(str(r.get('amount')))
                     currency = r.get('currency', 'INR')
                     exchange_rate = Decimal(str(r.get('exchange_rate', 1.0)))

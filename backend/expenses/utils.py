@@ -358,15 +358,15 @@ def parse_csv_export(file_content, group_id):
         # Percentage sum check (Row 15 and Row 32)
         if resolved_split_type == 'percentage' and resolved_split_details:
             # Parse percentages, e.g. Aisha 30%; Rohan 30%; Priya 30%; Meera 20%
-            pcts = re.findall(r'([a-zA-Z\s]+)\s*(\d+)%', resolved_split_details)
-            pct_sum = sum(int(p[1]) for p in pcts)
+            pcts = re.findall(r'([a-zA-Z\s]+)\s*(\d+(?:\.\d+)?)%?', resolved_split_details)
+            pct_sum = sum(float(p[1]) for p in pcts)
             if pct_sum != 100:
                 row_anomalies.append({
                     'type': 'percentage_split_sum_error',
                     'description': f"Percentage splits sum to {pct_sum}% instead of 100%. Auto-normalizing to 100%.",
                     'field': 'split_details',
                     'raw_val': raw_split_details,
-                    'resolved_val': '; '.join([f"{clean_name(p[0])} {round(int(p[1])/pct_sum * 100, 2)}%" for p in pcts])
+                    'resolved_val': '; '.join([f"{clean_name(p[0])} {round(float(p[1])/pct_sum * 100, 2)}%" for p in pcts])
                 })
 
         # 7. Check for duplicate records (Marina Bites and Thalassa)
