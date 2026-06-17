@@ -115,5 +115,16 @@ This log documents the AI tools used, key prompts, and three concrete cases wher
 - **What was changed**: 
   Updated `ALLOWED_HOSTS = ['*']` in `settings.py` to permit request headers from any subdomain host.
 
+---
+
+### Case 9: Live CSV Ingestion and Dashboard N+1 Query Gateway Timeout (502 Bad Gateway)
+- **What the AI did wrong**:
+  Ingesting 42 rows of CSV data sequentially triggered ~300 database queries, and loading the dashboard list elements triggered another ~150 database queries because of nested query patterns (N+1 queries). Over a high-latency database connection to Supabase (Seoul, `ap-northeast-2`), this took >45 seconds, causing Render's Gunicorn workers to exceed their 30-second timeout and return a `502 Bad Gateway` ("Failed to fetch" in the frontend).
+- **How it was caught**:
+  Submitting the CSV import on the deployed site caused a network "Failed to fetch" error, and checking the Render console revealed Gunicorn worker timeout terminations. Direct API endpoint calls timed out at 30 seconds.
+- **What was changed**:
+  Optimized both the import ingestion logic and the dashboard list endpoints in `views.py` and `utils.py`. Used in-memory query caches (`_user_cache`, `_membership_cache`) for bulk ingestion, and added Django `.select_related()` and `.prefetch_related()` query optimizations for group expenses, settlements, and membership listings. Warmed-up dashboard list latency decreased from >27s to under 2s.
+
+
 
 
